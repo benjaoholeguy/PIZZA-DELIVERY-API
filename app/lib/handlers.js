@@ -319,71 +319,43 @@ handlers._tokens = {};
 // Required data: email
 // Optional data: none
 handlers._tokens.post = (data,callback) => {
-  helpers.validateEmail(format='json',data.payload.email,(email) => {
-    if(email){
-      // Lookup the user who matches that email address
-      _data.read('users',email,(err,userData) => {
-        if(!err && userData){
-          const tokenId = helpers.createRandomString(20);
-          const expires = Date.now() + 1000 * 60 * 60;
-          const tokenObject = {
-            'email' : email,
-            'id' : tokenId,
-            'expires' : expires
-          };
-          // Store the token
-          _data.create('tokens',tokenId,tokenObject,(err) => {
-            if(!err){
-              callback(200,tokenObject);
-            } else {
-              callback(500,{'Error' : 'Could not create the new token'});
-            }
-          });
-        } else {
-          callback(400,{'Error' : 'Email did not match the specified user\'s stored email'});
-        }
-      });
-    } else {
-      debug({'Email' : email,
-      'Email_evaluated' : data.payload.email});
-      callback(403,{'Error' : 'Email validation fails'});
-    }
-  });
-  // const phone = typeof(data.payload.phone) == 'string' && data.payload.phone.trim().length == 10 ? data.payload.phone.trim() : false;
-  // const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
-  // if(phone){
-    // Lookup the user who matches that email address
-  //   _data.read('users',phone,(err,userData) => {
-  //     if(!err && userData){
-  //       const hashedPassword = helpers.hash(password);
-  //       if(hashedPassword == userData.password){
-  //         // If valid, create a new token with a random name. Set expiration date 1 hour in the future
-  //         const tokenId = helpers.createRandomString(20);
-  //         const expires = Date.now() + 1000 * 60 * 60;
-  //         const tokenObject = {
-  //           'phone' : phone,
-  //           'id' : tokenId,
-  //           'expires' : expires
-  //         };
-  //
-  //         // Store the token
-  //         _data.create('tokens',tokenId,tokenObject,(err) => {
-  //           if(!err){
-  //             callback(200,tokenObject);
-  //           } else {
-  //             callback(500,{'Error' : 'Could not create the new token'});
-  //           }
-  //         });
-  //       } else {
-  //         callback(400,{'Error' : 'Password did not match the specified user\'s stored password'});
-  //       }
-  //     } else {
-  //       callback(400,{'Error' : 'Could not find the specified user'});
-  //     }
-  //   })
-  // } else {
-  //   callback(400,{'Error' : 'Missing required field(s)'});
-  // }
+  debug(data);
+  const strEmail = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
+  if(strEmail){
+    helpers.validateEmail(format='json',strEmail,(email) => {
+      if(email){
+        // Lookup the user who matches that email address
+        _data.read('users',email,(err,userData) => {
+          if(!err && userData){
+            const tokenId = helpers.createRandomString(20);
+            const expires = Date.now() + 1000 * 60 * 60;
+            const tokenObject = {
+              'email' : email,
+              'id' : tokenId,
+              'expires' : expires
+            };
+            // Store the token
+            _data.create('tokens',tokenId,tokenObject,(err) => {
+              if(!err){
+                callback(200,tokenObject);
+              } else {
+                callback(500,{'Error' : 'Could not create the new token'});
+              }
+            });
+          } else {
+            callback(400,{'Error' : 'Email did not match the specified user\'s stored email'});
+          }
+        });
+      } else {
+        debug({'Email' : email,
+        'Email_evaluated' : data.payload.email});
+        callback(403,{'Error' : 'Email validation fails'});
+      }
+    });
+
+  } else {
+    callback(400,{'Error' : 'Missing required field(s)'});
+  }
 };
 
 // Tokens - get
