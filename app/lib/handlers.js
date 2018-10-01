@@ -48,9 +48,7 @@ handlers._users = {}
 handlers._users.post = (data,callback) => {
   // Check that all required fields are filled out
   const name = typeof(data.payload.name) == 'string' && data.payload.name.trim().length > 0 ? data.payload.name.trim() : false;
-
   const address = typeof(data.payload.address) == 'string' && data.payload.address.trim().length > 0 ? data.payload.address.trim() : false;
-  // const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
   const tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
 
 
@@ -130,98 +128,137 @@ handlers._users.get = (data,callback) => {
           });
         } else {
           callback(403,{'Error' : 'Missing required token in header, or token is invalidd'});
-
-          // callback(403,{'Error' : data});
-
+          debug({'Data' : data});
         }
       });
     } else {
       callback(400,{'Error' : 'Missing required field'});
     }
   });
-  // const email = typeof(data.queryStringObject.phone) == 'string' &&
-  //   data.queryStringObject.phone.trim().length == 10 ?
-  //   data.queryStringObject.phone.trim() : false;
-  // if(phone){
-  //   // Get the token from the headers
-  //   const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-  //
-  //   // Verify that the given token is valid for the phone number
-  //   handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
-  //     if(tokenIsValid){
-  //       // Look up the user
-  //       _data.read('users',phone,(err,data) => {
-  //         if(!err && data){
-  //           // Remove the hashed password from he user object before returning it to the requester
-  //           delete data.password;
-  //           // it is the data which coming back from the read not the date who coming in on the get
-  //           callback(200,data);
-  //         } else {
-  //           callback(404);
-  //         }
-  //       });
-  //     } else {
-  //       callback(403,{'Error' : 'Missing required token in header, or token is invalidd'});
-  //
-  //       // callback(403,{'Error' : data});
-  //
-  //     }
-  //   });
-  // } else {
-  //   callback(400,{'Error' : 'Missing required field'});
-  // }
-
 };
 
-// Users - put
-// Required data: phone
-// Optional data: firstName, lastName, password (at least one must be specified)
+/*
+* @desc: Users - put
+* @param {object} data
+* @param {function} callback
+* @required {string} data.email
+* @optional {string} data.name
+* @optional {string} data.address
+* @optional {boolean} data.tosAgreement
+*/
 handlers._users.put = (data,callback) => {
-  // Check for the required field
-  const phone = typeof(data.payload.phone) == 'string' &&
-    data.payload.phone.trim().length == 10 ?
-    data.payload.phone.trim() : false;
+  helpers.validateEmail(format='json',data.payload.email,(email) => {
+    if(email){
+      // Check that all required fields are filled out
+      const name = typeof(data.payload.name) == 'string' && data.payload.name.trim().length > 0 ? data.payload.name.trim() : false;
+      const address = typeof(data.payload.address) == 'string' && data.payload.address.trim().length > 0 ? data.payload.address.trim() : false;
+      const tosAgreement = typeof(data.payload.tosAgreement) == 'boolean' && data.payload.tosAgreement == true ? true : false;
 
-  // Check for the optional fields
-  const firstName = typeof(data.payload.firstName) == 'string' && data.payload.firstName.trim().length > 0 ? data.payload.firstName.trim() : false;
-  const lastName = typeof(data.payload.lastName) == 'string' && data.payload.lastName.trim().length > 0 ? data.payload.lastName.trim() : false;
-  const password = typeof(data.payload.password) == 'string' && data.payload.password.trim().length > 0 ? data.payload.password.trim() : false;
+      if(name || address || tosAgreement){
 
-  // Error if the phone is invalid
-  if(phone){
-    // Error if nothing is sent to Update
-    if(firstName || lastName || password){
+        // Get the token from the headers
+        const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
 
+            // Verify that the given token is valid for the phone number
+            handlers._tokens.verifyToken(token,email,(tokenIsValid) => {
+              if(tokenIsValid){
+                // Lookup the user
+                _data.read('users',email,(err,userData) => {
+                  if(!err && userData){
+                    // Update the fields necessary
+                    if(name){
+                      userData.userName = name;
+                    }
+                    if(address){
+                      userData.userAddress = address;
+                    }
+
+                    // Store the new updates
+                    _data.update('users',email,userData,(err) => {
+                      if(!err){
+                        callback(200);
+                      } else {
+                        console.log(err);
+                        callback(500,{'Error' : 'Could not update the user'});
+                      }
+                    });
+                  } else {
+                    callback(400,{'Error' : 'The specified user does not exist'});
+                  }
+                });
+              } else {
+                callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+              }
+            });
+
+        // callback(200,data);
+      } else {
+        callback(400,{'Error' : 'Missing fields to update'});
+      }
+    } else {
+      callback(400,{'Error' : 'Missing required field'});
+      debug({'Email' : email});
+    }
+  });
+};
+
+/*
+* @desc: Users - delete
+* @param {object} data
+* @param {function} callback
+* @required {string} data.email
+* Optional data: none
+*/
+// Users - delete
+// Required data: phone
+// Optional data: none
+// @TODO Cleanup (delete) any other data files associated with this user
+handlers._users.delete = (data,callback) => {
+
+  helpers.validateEmail(format='json',data.payload.email,(email) => {
+    if(email){
       // Get the token from the headers
       const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-
       // Verify that the given token is valid for the phone number
-      handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
+      handlers._tokens.verifyToken(token,email,(tokenIsValid) => {
         if(tokenIsValid){
-          // Lookup the user
-          _data.read('users',phone,(err,userData) => {
+          // Look up the user
+          _data.read('users',email,(err,userData) => {
             if(!err && userData){
-              // Update the fields necessary
-              if(firstName){
-                userData.firstName = firstName;
-              }
-              if(lastName){
-                userData.lastName = lastName;
-              }
-              if(password){
-                userData.password = helpers.hash(password);
-              }
-              // Store the new updates
-              _data.update('users',phone,userData,(err) => {
-                if(!err){
-                  callback(200);
+              _data.delete('users',email,(err) => {
+                if (!err){
+                  // Delete each of the checks associated with the user
+                  const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+                  const checksToDelete = userChecks.length;
+                  if(checksToDelete > 0){
+                    let checksDeleted = 0;
+                    let deletionErrors = false;
+                    // Loop through the checks
+                    userChecks.forEach((checkId) => {
+                      // Delete the check
+                      _data.delete('checks',checkId,(err) => {
+                        if(err){
+                          deletionErrors = true;
+                        }
+                        checksDeleted++;
+                        if(checksDeleted == checksToDelete){
+                          if(!deletionErrors){
+                            callback(200);
+                          } else {
+                            callback(500,{'Error' : 'Errors encontuered while attempting to delete all of the users check\'s. All checks may not have been deleted from the system successfuly'});
+                          }
+                        }
+                      });
+                    });
+                  } else {
+                    callback(200);
+                  }
                 } else {
-                  console.log(err);
-                  callback(500,{'Error' : 'Could not update the user'});
+                  callback(500,{'Error' : 'Could not delete the specified user'})
                 }
               });
             } else {
-              callback(400,{'Error' : 'The specified user does not exist'});
+              callback(400,{'Error' : 'Could not find the specified user'});
             }
           });
         } else {
@@ -229,77 +266,67 @@ handlers._users.put = (data,callback) => {
         }
       });
     } else {
-      callback(400,{'Error' : 'Missing fields to update'});
+      callback(400,{'Error' : 'Missing required field'});
     }
-  } else {
-    callback(400,{'Error' : 'Missing required field'});
-  }
-
-};
-
-// Users - delete
-// Required data: phone
-// Optional data: none
-// @TODO Cleanup (delete) any other data files associated with this user
-handlers._users.delete = (data,callback) => {
-  // Check that the phone number provided is invalid
-  const phone = typeof(data.queryStringObject.phone) == 'string' &&
-    data.queryStringObject.phone.trim().length == 10 ?
-    data.queryStringObject.phone.trim() : false;
-  if(phone){
-
-    // Get the token from the headers
-    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-
-    // Verify that the given token is valid for the phone number
-    handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
-      if(tokenIsValid){
-        // Look up the user
-        _data.read('users',phone,(err,userData) => {
-          if(!err && userData){
-            _data.delete('users',phone,(err) => {
-              if (!err){
-                // Delete each of the checks associated with the user
-                const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
-                const checksToDelete = userChecks.length;
-                if(checksToDelete > 0){
-                  let checksDeleted = 0;
-                  let deletionErrors = false;
-                  // Loop through the checks
-                  userChecks.forEach((checkId) => {
-                    // Delete the check
-                    _data.delete('checks',checkId,(err) => {
-                      if(err){
-                        deletionErrors = true;
-                      }
-                      checksDeleted++;
-                      if(checksDeleted == checksToDelete){
-                        if(!deletionErrors){
-                          callback(200);
-                        } else {
-                          callback(500,{'Error' : 'Errors encontuered while attempting to delete all of the users check\'s. All checks may not have been deleted from the system successfuly'});
-                        }
-                      }
-                    });
-                  });
-                } else {
-                  callback(200);
-                }
-              } else {
-                callback(500,{'Error' : 'Could not delete the specified user'})
-              }
-            });
-          } else {
-            callback(400,{'Error' : 'Could not find the specified user'});
-          }
-        });
-      } else {
-        callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
-      }
-    });
-  } else {
-    callback(400,{'Error' : 'Missing required field'});
-  }
+  });
+//   // Check that the phone number provided is invalid
+//   const phone = typeof(data.queryStringObject.phone) == 'string' &&
+//     data.queryStringObject.phone.trim().length == 10 ?
+//     data.queryStringObject.phone.trim() : false;
+//   if(phone){
+//
+//     // Get the token from the headers
+//     const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+//
+//     // Verify that the given token is valid for the phone number
+//     handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
+//       if(tokenIsValid){
+//         // Look up the user
+//         _data.read('users',phone,(err,userData) => {
+//           if(!err && userData){
+//             _data.delete('users',phone,(err) => {
+//               if (!err){
+//                 // Delete each of the checks associated with the user
+//                 const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
+//                 const checksToDelete = userChecks.length;
+//                 if(checksToDelete > 0){
+//                   let checksDeleted = 0;
+//                   let deletionErrors = false;
+//                   // Loop through the checks
+//                   userChecks.forEach((checkId) => {
+//                     // Delete the check
+//                     _data.delete('checks',checkId,(err) => {
+//                       if(err){
+//                         deletionErrors = true;
+//                       }
+//                       checksDeleted++;
+//                       if(checksDeleted == checksToDelete){
+//                         if(!deletionErrors){
+//                           callback(200);
+//                         } else {
+//                           callback(500,{'Error' : 'Errors encontuered while attempting to delete all of the users check\'s. All checks may not have been deleted from the system successfuly'});
+//                         }
+//                       }
+//                     });
+//                   });
+//                 } else {
+//                   callback(200);
+//                 }
+//               } else {
+//                 callback(500,{'Error' : 'Could not delete the specified user'})
+//               }
+//             });
+//           } else {
+//             callback(400,{'Error' : 'Could not find the specified user'});
+//           }
+//         });
+//       } else {
+//         callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+//       }
+//     });
+//   } else {
+//     callback(400,{'Error' : 'Missing required field'});
+//   }
 };
 
 // tokens

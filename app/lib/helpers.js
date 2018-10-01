@@ -154,6 +154,8 @@ helpers.validateEmail = (format,email,callback) => {
       callback(e);
     });
 
+  } else {
+    callback(false);
   }
 
 }
