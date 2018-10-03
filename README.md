@@ -2,8 +2,12 @@
 
 # Explanation
   - API Implementation for a pizza-delivery company.
-  - It should be a RESTful JSON API that listens on a port of your choice.
-  - When someone posts anything to the route /hello, you should return a welcome message, in JSON format. This message can be anything you want.
+  - RESTful JSON API that listens on ports 3000 and 3001 for testing and 5000 and 5001 for production.
+  - API allows you to:
+    - Create new users (name, email address, street address)
+    - Edit their information
+    - Delete thier information
+    - User could login and logout creating and destroying a token
 
 # Email validation
   - Email validation have been done with trumail API (https://trumail.io/)
