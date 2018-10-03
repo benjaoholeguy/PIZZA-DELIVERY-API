@@ -209,12 +209,7 @@ handlers._users.put = (data,callback) => {
 * @required {string} data.email
 * Optional data: none
 */
-// Users - delete
-// Required data: phone
-// Optional data: none
-// @TODO Cleanup (delete) any other data files associated with this user
 handlers._users.delete = (data,callback) => {
-
   helpers.validateEmail(format='json',data.payload.email,(email) => {
     if(email){
       // Get the token from the headers
@@ -269,64 +264,6 @@ handlers._users.delete = (data,callback) => {
       callback(400,{'Error' : 'Missing required field'});
     }
   });
-//   // Check that the phone number provided is invalid
-//   const phone = typeof(data.queryStringObject.phone) == 'string' &&
-//     data.queryStringObject.phone.trim().length == 10 ?
-//     data.queryStringObject.phone.trim() : false;
-//   if(phone){
-//
-//     // Get the token from the headers
-//     const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
-//
-//     // Verify that the given token is valid for the phone number
-//     handlers._tokens.verifyToken(token,phone,(tokenIsValid) => {
-//       if(tokenIsValid){
-//         // Look up the user
-//         _data.read('users',phone,(err,userData) => {
-//           if(!err && userData){
-//             _data.delete('users',phone,(err) => {
-//               if (!err){
-//                 // Delete each of the checks associated with the user
-//                 const userChecks = typeof(userData.checks) == 'object' && userData.checks instanceof Array ? userData.checks : [];
-//                 const checksToDelete = userChecks.length;
-//                 if(checksToDelete > 0){
-//                   let checksDeleted = 0;
-//                   let deletionErrors = false;
-//                   // Loop through the checks
-//                   userChecks.forEach((checkId) => {
-//                     // Delete the check
-//                     _data.delete('checks',checkId,(err) => {
-//                       if(err){
-//                         deletionErrors = true;
-//                       }
-//                       checksDeleted++;
-//                       if(checksDeleted == checksToDelete){
-//                         if(!deletionErrors){
-//                           callback(200);
-//                         } else {
-//                           callback(500,{'Error' : 'Errors encontuered while attempting to delete all of the users check\'s. All checks may not have been deleted from the system successfuly'});
-//                         }
-//                       }
-//                     });
-//                   });
-//                 } else {
-//                   callback(200);
-//                 }
-//               } else {
-//                 callback(500,{'Error' : 'Could not delete the specified user'})
-//               }
-//             });
-//           } else {
-//             callback(400,{'Error' : 'Could not find the specified user'});
-//           }
-//         });
-//       } else {
-//         callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
-//       }
-//     });
-//   } else {
-//     callback(400,{'Error' : 'Missing required field'});
-//   }
 };
 
 // tokens

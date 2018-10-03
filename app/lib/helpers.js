@@ -119,7 +119,6 @@ helpers.sendTwilioSms = (phone,msg,callback) => {
 };
 
 // Validate email address with truemail.io
-// @TODO change harcode country number
 helpers.validateEmail = (format,email,callback) => {
 
   const userEmail = typeof(email) == 'string' && email.trim().length > 0 ? email.trim() : false;
