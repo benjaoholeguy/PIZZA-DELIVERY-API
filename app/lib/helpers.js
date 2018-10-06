@@ -9,6 +9,8 @@ const crypto = require('crypto');
 const config = require('./config');
 const https = require('https');
 const querystring = require('querystring');
+const util = require('util');
+const debug = util.debuglog('helpers');
 
 // Container for all the Helpers
 const helpers = {};
@@ -159,6 +161,93 @@ helpers.validateEmail = (format,email,callback) => {
 
 }
 
+// Sum all pizza values
+// @TODO  and calculate taxes
+helpers.totalOrder = (data) => {
+  if(data){
+    let sum = 0;
+    data.forEach(data=>{
+      sum+=data.pizzaPrice;
+    });
+    return sum;
+  } else {
+    return false;
+  }
+}
+
+/* @desc: Payment request by stripe API.
+* @param {object} data
+* @param {function} callback
+* Required data : {number} data.amount. Could not be a low number
+* Required data : {string} data.currency
+* Required data : {string} data.source
+* Required data : {string} data.description
+* Optional data : none
+*/
+helpers.stripe = async (data,callback) => {
+  // amount, currency, description, source
+  // Create a payment from a test card token.
+  // const charge = async() => {
+    return new Promise((resolve, reject) => {
+      // if (!amount || !source || !currency) {
+      //   reject(new Error("Missing required payment fields."));
+      // }
+
+      const payload = {
+        amount: data.amount,
+        currency: data.currency,
+        source: data.source,
+        description: data.description
+      };
+
+      const stringPayload = querystring.stringify(payload);
+
+      const requestDetails = {
+        protocol: "https:",
+        hostname: "api.stripe.com",
+        port: 443,
+        method: "POST",
+        path: "/v1/charges",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(stringPayload),
+          Authorization: `Bearer ${config.stripe.secretKey}`
+        }
+      };
+
+      const request = https.request(requestDetails, async res => {
+        const status = res.statusCode;
+        let responseBodyString = "";
+        await res.on("data", chunk => {
+          responseBodyString += chunk;
+        });
+
+        if (status === 200 || status === 201) {
+          resolve({
+            success: true,
+            responseBody: JSON.parse(responseBodyString)
+          });
+        } else {
+          reject({
+            success: false,
+            responseBody: JSON.parse(responseBodyString)
+          });
+        }
+      });
+
+      request.on("error", err => {
+        callback(err);
+      });
+
+      request.write(stringPayload);
+
+      request.end();
+    }).then((value)=>{
+      debug(value);
+      return value.responseBody.id;
+    });
+  // }
+};
 
 // Export the module
 module.exports = helpers;
