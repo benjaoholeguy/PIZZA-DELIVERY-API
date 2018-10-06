@@ -10,7 +10,9 @@
     - User could login and logout creating and destroying a token
 
 # Email validation
-  - Email validation have been done with trumail API (https://trumail.io/)
+  - Two validation levels of the email:
+    - Empty email field
+    - Existence Email validation have been done with trumail API (https://trumail.io/)
 
 # Operating Instructions
 - git clone https://github.com/benjaoholeguy/PIZZA-DELIVERY-API.git
@@ -20,9 +22,84 @@
 # Tech Stack
 - node
 
-# To test the application:
+---
+## RESTful API ENDPOINTS
+
+### ```/pizzas```
+
+##### GET
+
+- Retrieve data for an existing user as JSON.  
+Required fields: (in queryStringObject object) {string}`email`, {numeric}`pizzaId`
+Return: Pizza object
+Requires Token: Yes
+
+### ```/users```
+
+##### POST
+
+- Create a new user. Each user must have a unique email address.  
+Required: (in JSON payload) {string}`name`, {string}`email`, {string}`address`, {boolean}`tosAgreement`
+Return: User object
+Requires Token: No
+
+##### GET
+
+- Retrieve data for an existing user as JSON.  
+Required fields: (in queryStringObject object) {string}`email`
+Return: User object
+Requires Token: Yes
+
+##### PUT
+
+- Update an existing user.  
+Required: (in JSON payload) `email`  
+Optional: (in JSON payload) `name`, `address`, `tosAgreement` (at least one must be specified)
+Return: User object
+Requires Token: Yes
+
+##### DELETE
+
+- Delete an existing user.  
+Required: (in JSON payload) {string}`email`
+Return: {}  
+Requires Token: Yes
+
+### ```/tokens```
+
+##### POST
+
+- Create user token
+Required fields: (in JSON payload) {String}`email`
+Return: {String}`email`, {String}`id`, {number}`expires`  
+Requires Token: No
+
+##### GET
+
+- Lookup the token for a user.  
+Required: (in queryStringObject object) {String}`id`
+Return: {String}`email`, {String}`id`, {number}`expires`    
+Requires Token: No
+
+##### PUT
+
+- Extend a token for a user.  
+Required: (in JSON payload) {string}`id`, {boolean}`extend`  
+Return: {}
+Requires Token: Yes
+
+##### DELETE
+
+- Remove user token  
+Required fields: (in queryStringObject object) {string}`id`
+Return: {}
+Requires Token: Yes
+
+# Run the API
 - node index.js run the application on port 3000 and 3001 (default)
 - NODE_ENV=production node index.js run the application on ports 5000 & 5001
-- localhost:3000/hello response is hello handler
 
 # To run in debug mode:
+- NODE_DEBUG=/*file to debug*/ node index.js
+- EG: NODE_DEBUG=handlers node index.js
+- Example: NODE_DEBUG=pizzas node index.js
