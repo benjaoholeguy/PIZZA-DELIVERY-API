@@ -30,70 +30,70 @@
 ##### GET
 
 - Retrieve data for an existing user as JSON.  
-Required fields: (in queryStringObject object) {string}`email`, {numeric}`pizzaId`
-Return: Pizza object
-Requires Token: Yes
+- Required fields: (in queryStringObject object) {string}`email`, {numeric}`pizzaId`
+- Return: Pizza object
+- Requires Token: Yes
 
 ### ```/users```
 
 ##### POST
 
 - Create a new user. Each user must have a unique email address.  
-Required: (in JSON payload) {string}`name`, {string}`email`, {string}`address`, {boolean}`tosAgreement`
-Return: User object
-Requires Token: No
+- Required: (in JSON payload) {string}`name`, {string}`email`, {string}`address`, {boolean}`tosAgreement`
+- Return: User object
+- Requires Token: No
 
 ##### GET
 
 - Retrieve data for an existing user as JSON.  
-Required fields: (in queryStringObject object) {string}`email`
-Return: User object
-Requires Token: Yes
+- Required fields: (in queryStringObject object) {string}`email`
+- Return: User object
+- Requires Token: Yes
 
 ##### PUT
 
 - Update an existing user.  
-Required: (in JSON payload) `email`  
-Optional: (in JSON payload) `name`, `address`, `tosAgreement` (at least one must be specified)
-Return: User object
-Requires Token: Yes
+- Required: (in JSON payload) `email`  
+- Optional: (in JSON payload) `name`, `address`, `tosAgreement` (at least one must be specified)
+- Return: User object
+- Requires Token: Yes
 
 ##### DELETE
 
 - Delete an existing user.  
-Required: (in JSON payload) {string}`email`
-Return: {}  
-Requires Token: Yes
+- Required: (in JSON payload) {string}`email`
+- Return: {}  
+- Requires Token: Yes
 
 ### ```/tokens```
 
 ##### POST
 
 - Create user token
-Required fields: (in JSON payload) {String}`email`
-Return: {String}`email`, {String}`id`, {number}`expires`  
-Requires Token: No
+- Required fields: (in JSON payload) {String}`email`
+- Return: {String}`email`, {String}`id`, {number}`expires`  
+- Requires Token: No
 
 ##### GET
 
 - Lookup the token for a user.  
-Required: (in queryStringObject object) {String}`id`
-Return: {String}`email`, {String}`id`, {number}`expires`    
-Requires Token: No
+- Required: (in queryStringObject object) {String}`id`
+- Return: {String}`email`, {String}`id`, {number}`expires`    
+- Requires Token: No
 
 ##### PUT
 
 - Extend a token for a user.  
-Required: (in JSON payload) {string}`id`, {boolean}`extend`  
-Return: {}
-Requires Token: Yes
+- Required: (in JSON payload) {string}`id`, {boolean}`extend`  
+- Return: {}
+- Requires Token: Yes
 
 ##### DELETE
 
 - Remove user token  
-Required fields: (in queryStringObject object) {string}`id`
-Return: {}
-Requires Token: Yes
+- Required fields: (in queryStringObject object) {string}`id`
+- Return: {}
+- Requires Token: Yes
 
 # Run the API
 - node index.js run the application on port 3000 and 3001 (default)
