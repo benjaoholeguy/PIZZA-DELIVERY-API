@@ -21,7 +21,7 @@ const handlers = {};
 * @desc: Service to handle users. Figure out that an acceptable method is requested
 * @param {object} data
 * @param {function} callback
-* Required data: {string} data.method
+* @required {string} data.method
 */
 handlers.users = (data,callback)=>{
   const acceptableMethods = ['post','get','put','delete'];
@@ -159,37 +159,37 @@ handlers._users.put = (data,callback) => {
         // Get the token from the headers
         const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
 
-            // Verify that the given token is valid for the phone number
-            handlers._tokens.verifyToken(token,email,(tokenIsValid) => {
-              if(tokenIsValid){
-                // Lookup the user
-                _data.read('users',email,(err,userData) => {
-                  if(!err && userData){
-                    // Update the fields necessary
-                    if(name){
-                      userData.userName = name;
-                    }
-                    if(address){
-                      userData.userAddress = address;
-                    }
+        // Verify that the given token is valid for the user email
+        handlers._tokens.verifyToken(token,email,(tokenIsValid) => {
+          if(tokenIsValid){
+            // Lookup the user
+            _data.read('users',email,(err,userData) => {
+              if(!err && userData){
+                // Update the fields necessary
+                if(name){
+                  userData.userName = name;
+                }
+                if(address){
+                  userData.userAddress = address;
+                }
 
-                    // Store the new updates
-                    _data.update('users',email,userData,(err) => {
-                      if(!err){
-                        callback(200);
-                      } else {
-                        console.log(err);
-                        callback(500,{'Error' : 'Could not update the user'});
-                      }
-                    });
+                // Store the new updates
+                _data.update('users',email,userData,(err) => {
+                  if(!err){
+                    callback(200);
                   } else {
-                    callback(400,{'Error' : 'The specified user does not exist'});
+                    console.log(err);
+                    callback(500,{'Error' : 'Could not update the user'});
                   }
                 });
               } else {
-                callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+                callback(400,{'Error' : 'The specified user does not exist'});
               }
             });
+          } else {
+            callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+          }
+        });
 
         // callback(200,data);
       } else {
@@ -265,6 +265,106 @@ handlers._users.delete = (data,callback) => {
     }
   });
 };
+
+/*
+* @desc: Service to handle pizzas. Figure out that an acceptable method is requested
+* @param {object} data
+* @param {function} callback
+* Required data: {string} data.method
+* @TODO post, put and delete methods
+*/
+handlers.pizzas = (data,callback)=>{
+  const acceptableMethods = ['get'];
+  if(acceptableMethods.indexOf(data.method) > -1){
+    handlers._pizzas[data.method](data,callback);
+  } else {
+    callback(405);
+  }
+}
+
+// Conteiner for the pizzas submethods
+handlers._pizzas = {}
+
+/* @desc: Pizzas - get
+* @param {object} data
+* @param {function} callback
+* Required data : {string} id
+* Required data : {string} email
+* Optional data : none
+*/
+handlers._pizzas.get = (data,callback) => {
+  // Check that the pizza id provided is valid
+  const id = typeof(data.queryStringObject.id) == 'string' &&
+    data.queryStringObject.id.trim().length > 0 ?
+    data.queryStringObject.id.trim() : false;
+
+  // Check the user email field is not empty
+  const email = typeof(data.queryStringObject.email) == 'string' &&
+    data.queryStringObject.email.trim().length > 0 ?
+    data.queryStringObject.email.trim() : false;
+
+
+  if(id && email){
+    // Lookup the check
+    _data.read('pizzas',id,(err,pizzaData) => {
+      if(!err && pizzaData){
+
+        // Get the token from the headers
+        const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+
+        // Verify that the given token is valid and belongs to the user who created the check
+        handlers._tokens.verifyToken(token,email,(tokenIsValid) => {
+          if(tokenIsValid){
+            // Return the checkData
+            callback(200,pizzaData);
+          } else {
+            callback(403,{'Error' : 'Invalid token'});
+          }
+        });
+      } else {
+        callback(404);
+      }
+    });
+  } else {
+    callback(400,{'Error' : 'Missing required field'});
+  }
+};
+
+/* @desc: Verify if the array of pizzas don't contain invalid id's
+* @param {Array} pizzas
+* @param {function} callback
+* Required data : {string} pizzaId
+* Optional data : none
+*/
+handlers._pizzas.verifyPizzas = (pizzas,callback) => {
+  // Array of pizza objects
+  let orderedPizzas = [];
+  // Variable for invalid code detection
+  let falsePizzaIdDetected = false;
+  // Loop through the pizzas
+  pizzas.forEach((pizzaId,index) => {
+    // Read the pizza
+    _data.read('pizzas',pizzaId,(err,pizzaData) => {
+      if(err){
+        falsePizzaIdDetected = true;
+      } else {
+        const pizzaObject = {
+          "pizzaId" : pizzaId,
+          "pizzaName" : pizzaData.name,
+          "pizzaPrice" : pizzaData.price
+        };
+        orderedPizzas.push(pizzaObject);
+      }
+      if(pizzas.length-1 == index){
+        if(falsePizzaIdDetected){
+          callback(false);
+        } else {
+          callback(orderedPizzas);
+        }
+      }
+    });
+  });
+}
 
 // tokens
 handlers.tokens = (data,callback)=>{
@@ -426,6 +526,180 @@ handlers._tokens.verifyToken = (id,email,callback) => {
   });
 }
 
+// Carts Service
+handlers.carts = (data,callback)=>{
+  const acceptableMethods = ['post','get','put','delete'];
+  if(acceptableMethods.indexOf(data.method) > -1){
+    handlers._carts[data.method](data,callback);
+  } else {
+    callback(405);
+  }
+}
+
+// Container for all the carts methods
+handlers._carts = {};
+
+/* @desc: Pizzas - post
+* @param {object} data
+* @param {function} callback
+* Required data : {string} userEmail
+* Required data : {Array} pizzasId
+* Optional data : none
+*/
+handlers._carts.post = (data,callback) => {
+  // Validate userEmail and pizzasId are not empty
+  const userEmail = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
+  const pizzas = typeof(data.payload.pizzas) == 'object' && data.payload.pizzas instanceof Array && data.payload.pizzas.length > 0 ? data.payload.pizzas : false;
+  if(userEmail && pizzas){
+    // Get the token from the headers
+    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+
+    // Verify that the given pizza id's are valid
+    handlers._pizzas.verifyPizzas(pizzas,(orderPizzas) => {
+      if(orderPizzas){
+        // Verify that the given token is valid for the user email
+        handlers._tokens.verifyToken(token,userEmail,(tokenIsValid) => {
+          if(tokenIsValid){
+            // Create the random id for the cart
+            const cartId = helpers.createRandomString(20);
+
+            // Create total order
+            const totalOrder = helpers.totalOrder(orderPizzas);
+
+            // Create the cart object and include the user cartId, email, id pizzas array. NoSql way to store things. Like mongo.
+            const cartObject = {
+              'id' : cartId,
+              'userEmail' : userEmail,
+              'pizzas' : orderPizzas,
+              'totalOrder' : totalOrder
+            };
+            // Save this object to disc
+            _data.create('carts',cartId,cartObject,(err) => {
+              if(!err){
+                // Return the data about new check
+                callback(200,cartObject);
+              } else {
+                callback(500,{'Error' : 'Could not create the new cart'});
+              }
+            });
+          } else {
+            callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+          }
+        });
+      } else {
+        callback(500,{'Error' : 'One or more pizza id(s) are invalid'});
+      }
+
+    });
+
+  } else {
+    callback(400,{'Error' : 'Missing required input(s), or input(s) are invalid'});
+  }
+}
+
+// Payments Service
+handlers.orders = (data,callback)=>{
+  const acceptableMethods = ['post'];
+  if(acceptableMethods.indexOf(data.method) > -1){
+    handlers._orders[data.method](data,callback);
+  } else {
+    callback(405);
+  }
+}
+
+// Container for all the payments methods
+handlers._orders = {};
+
+/* @desc: Pizzas - post
+* @param {object} data
+* @param {function} callback
+* Required data : {string} userEmail
+* Required data : {string} orderId
+* Optional data : none
+*/
+handlers._orders.post = (data,callback) => {
+  // Validate inputs
+  // Validate userEmail and orderId are not empty
+  const orderId = typeof(data.payload.orderId) == 'string' && data.payload.orderId.trim().length == 20 ? data.payload.orderId.trim() : false;
+  const userEmail = typeof(data.payload.email) == 'string' && data.payload.email.trim().length > 0 ? data.payload.email.trim() : false;
+  const currency = typeof(data.payload.currency) == 'string' && ['nzd'].indexOf(data.payload.currency) > -1 ? data.payload.currency : false;
+  const source = typeof(data.payload.source) == 'string' && ['tok_nz'].indexOf(data.payload.source) > -1 ? data.payload.source : false;
+
+  if(userEmail && orderId && currency && source){
+    // Get the token from the headers
+    const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+
+
+        // Verify that the given token is valid for the user email
+        handlers._tokens.verifyToken(token,userEmail,(tokenIsValid) => {
+          if(tokenIsValid){
+            // Lookup the order
+            _data.read('carts',orderId,async(err,cartData) => {
+              if(!err && cartData){
+                // Data object destructuring
+                const {totalOrder,id} = cartData;
+                try{
+
+                  const paymentId = await helpers.stripe({
+                    amount: totalOrder,
+                    currency: currency,
+                    source: source,
+                    description: "Pizza DELIVERY Cart " + "- " + id
+                  });
+                  if(paymentId){
+                    // Create the order object and include the user email. NoSql way to store things. Like mongo.
+                    const orderObject = {
+                      'orderId' : id,
+                      'paymentId' : paymentId,
+                      'userEmail' : userEmail,
+                      'date' : Date.now(),
+                      'amount' : totalOrder
+                    };
+                    // Create the order
+                    _data.create('orders',orderId,orderObject,(err) => {
+                      if(!err){
+                        // Destroy the cart
+                        _data.read('carts',id,(err,cartData) => {
+                          if(!err && cartData){
+                            _data.delete('carts',id,(err) => {
+                              if(!err){
+                                // Return the data about new check
+                                callback(200,orderObject);
+                              } else {
+                                callback(500,{'Error' : 'Could not delete the cart data'});
+                              }
+                            });
+                          } else {
+                            callback(400,{'Error' : 'The specified check ID does not exist'});
+                          }
+                        });
+                      } else {
+                        callback(500,{'Error' : 'Could not create the new order'});
+                      }
+                    });
+                  } else {
+                    callback(500,{'Error' : 'Could not make the payment'});
+                  }
+                } catch (err) {
+                  callback(400, err);
+                }
+
+              } else {
+                callback(404);
+              }
+            });
+          } else {
+            callback(403,{'Error' : 'Missing required token in header, or token is invalid'});
+          }
+        });
+
+
+  } else {
+    callback(400,{'Error' : 'Missing required input(s), or input(s) are invalidd'});
+  }
+}
+
+
 // Checks service
 handlers.checks = (data,callback)=>{
   const acceptableMethods = ['post','get','put','delete'];
@@ -547,7 +821,6 @@ handlers._checks.get = (data,callback) => {
   } else {
     callback(400,{'Error' : 'Missing required field'});
   }
-
 };
 
 // Checks - put
