@@ -4,10 +4,15 @@
   - API Implementation for a pizza-delivery company.
   - RESTful JSON API that listens on ports 3000 and 3001 for testing and 5000 and 5001 for production.
   - API allows you to:
-    - Create new users (name, email address, street address)
-    - Edit their information
-    - Delete thier information
+    - Create, edit and delete users (name, email address, street address)
+    - Create, edit and delete tokens
+    - Get pizza's information
+    - Create, edit and delete carts
+    - Make payments (orders) integrating Stripe API
     - User could login and logout creating and destroying a token
+
+# Improvement opportunities
+    - Keep carts information. EG: present information about sales
 
 # Email validation
   - Two validation levels of the email:
@@ -55,6 +60,27 @@
 - Register a new json cart in carts folder.   
 - Required: (in JSON payload) {Array}`pizzas`, {string}`email`
 - Return: Cart object. {string}`cartId`, {Array}`pizzas`, {string}`userEmail`
+- Requires Token: Yes
+
+##### GET
+
+- Retrieve data for an existing cart in JSON format.  
+- Required fields: (in queryStringObject object) {string}`id`
+- Return: Cart object
+- Requires Token: Yes
+
+##### PUT
+
+- Update an existing cart.  
+- Required: (in JSON payload) {string}`id`, {Array}`pizzas`
+- Return: Cart object
+- Requires Token: Yes
+
+##### DELETE
+
+- Delete an existing user.  
+- Required: (in JSON payload) {string}`id`
+- Return: {}  
 - Requires Token: Yes
 
 ### ```/users```
@@ -124,5 +150,4 @@
 
 # To run in debug mode:
 - NODE_DEBUG=/*file to debug*/ node index.js
-- EG: NODE_DEBUG=handlers node index.js
-- Example: NODE_DEBUG=pizzas node index.js
+- Example: NODE_DEBUG=handlers node index.js
