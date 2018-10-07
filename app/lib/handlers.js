@@ -539,7 +539,7 @@ handlers.carts = (data,callback)=>{
 // Container for all the carts methods
 handlers._carts = {};
 
-/* @desc: Pizzas - post
+/* @desc: Carts - post
 * @param {object} data
 * @param {function} callback
 * Required data : {string} userEmail
@@ -597,6 +597,124 @@ handlers._carts.post = (data,callback) => {
   }
 }
 
+
+/* @desc: Carts - get
+* @param {object} data
+* @param {function} callback
+* Required data : {string} id
+* Optional data : none
+*/
+handlers._carts.get = (data,callback) => {
+  // Check that the id is valid
+  const id = typeof(data.queryStringObject.id) == 'string' &&
+    data.queryStringObject.id.trim().length == 20 ?
+    data.queryStringObject.id.trim() : false;
+  if(id){
+    // Look up the token
+    _data.read('carts',id,(err,cartData) => {
+      if(!err && cartData){
+        // it is the data which coming back from the read not the data who coming in on the get
+        callback(200,cartData);
+      } else {
+        callback(404);
+      }
+    });
+  } else {
+    callback(400,{'Error' : 'Missing required field'});
+  }
+};
+
+/* @desc: Carts - put
+* @param {object} data
+* @param {function} callback
+* Required data : {string} id
+* Required data : {Array} pizzas
+* Optional data : none
+*/
+handlers._carts.put = (data,callback) => {
+  const id = typeof(data.payload.id) == 'string' && data.payload.id.trim().length == 20 ? data.payload.id.trim() : false;
+  // const extend = typeof(data.payload.extend) == 'boolean' && data.payload.extend == true ? true : false;
+  const pizzas = typeof(data.payload.pizzas) == 'object' && data.payload.pizzas instanceof Array && data.payload.pizzas.length > 0 ? data.payload.pizzas : false;
+
+  if(id && pizzas){
+    // Lookup the token
+    _data.read('carts',id,(err,cartData) => {
+      if(!err && cartData){
+        // Get the token from the headers
+        const token = typeof(data.headers.token) == 'string' ? data.headers.token : false;
+
+        handlers._tokens.verifyToken(token,cartData.userEmail,(tokenIsValid) => {
+          if(tokenIsValid){
+            // Verify that the given pizza id's are valid
+            handlers._pizzas.verifyPizzas(pizzas,(orderPizzas) => {
+              if(orderPizzas){
+
+                // Create new total order
+                const totalOrder = helpers.totalOrder(orderPizzas);
+
+                // Update the cart where necessary
+                cartData.pizzas = orderPizzas;
+                cartData.totalOrder = totalOrder;
+
+                // Store the new updates
+                _data.update('carts',id,cartData,(err) => {
+                  if(!err){
+                    callback(200,cartData);
+                  } else {
+                    callback(500,{'Error' : 'Could not update the cart'});
+                  }
+                });
+              } else {
+                callback(500,{'Error' : 'One or more pizza id(s) are invalid'});
+              }
+            });
+
+          } else {
+            callback(403);
+          }
+        });
+      } else {
+        callback(400,{'Error' : 'Specified token does not exist'});
+      }
+    });
+  } else {
+    callback(400,{'Error' : 'Missing required field(s) or field(s) are invalid'});
+  }
+
+};
+
+/* @desc: Carts - delete
+* @param {object} data
+* @param {function} callback
+* Required data : {string} id
+* Optional data : none
+*/
+handlers._carts.delete = (data,callback) => {
+  // Check that the id is valid
+  const id = typeof(data.queryStringObject.id) == 'string' &&
+    data.queryStringObject.id.trim().length == 20 ?
+    data.queryStringObject.id.trim() : false;
+  if(id){
+    // Look up the user
+    _data.read('carts',id,(err,data) => {
+      if(!err && data){
+        _data.delete('carts',id,(err) => {
+          if (!err){
+            callback(200);
+          } else {
+            callback(500,{'Error' : 'Could not delete the specified cart'})
+          }
+        });
+      } else {
+        callback(400,{'Error' : 'Could not find the specified cart'});
+      }
+    });
+  } else {
+    callback(400,{'Error' : 'Missing required field'});
+  }
+};
+
+
 // Payments Service
 handlers.orders = (data,callback)=>{
   const acceptableMethods = ['post'];
@@ -653,7 +771,8 @@ handlers._orders.post = (data,callback) => {
                       'paymentId' : paymentId,
                       'userEmail' : userEmail,
                       'date' : Date.now(),
-                      'amount' : totalOrder
+                      'amount' : totalOrder,
+                      'pizzas' : cartData.pizzas
                     };
                     // Create the order
                     _data.create('orders',orderId,orderObject,(err) => {
