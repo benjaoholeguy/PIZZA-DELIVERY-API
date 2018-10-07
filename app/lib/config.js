@@ -22,6 +22,11 @@ environments.staging = {
   'stripe' : {
     'publishableKey' : 'pk_test_dRsh6dC16yyAnB1Eg7vikOyd',
     'secretKey' : 'sk_test_Md8ova3heErgE8rtUeI19sWW'
+  },
+  'mailgun' :{
+    'domainName' : 'sandbox1c5b5f99d0f347f0b1e02b5037c8e454.mailgun.org',
+    'apiKey' : '700b13afc47151edf7611b6d3c605f1c-c8e745ec-a869bc77',
+    'from' : 'postmaster@sandbox1c5b5f99d0f347f0b1e02b5037c8e454.mailgun.org'
   }
 };
 
