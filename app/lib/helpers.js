@@ -249,5 +249,63 @@ helpers.stripe = async (data,callback) => {
   // }
 };
 
+/* @desc: Mailgun API request
+* @param {string} to
+* @param {string} subject
+* @param {string} text
+* @param {function} callback
+* Optional data : none
+*/
+helpers.mailgun = (to, subject, text, callback)=>{
+  // Configure the request payload
+  let reqPayload = {
+    from: config.mailgun.from,
+    to: to, // 'to' would go here but I put my email address for testing purposes
+    subject: subject,
+    text: text
+  };
+
+  // Stringify the payload
+  let stringPayload = querystring.stringify(reqPayload);
+
+  // Configure the request details
+  let requestDetails = {
+    auth: 'api:' + config.mailgun.apiKey,
+    protocol: 'https:',
+    hostname: 'api.mailgun.net',
+    method: 'POST',
+    path: '/v3/' + config.mailgun.domainName + '/messages',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(stringPayload)
+    }
+  };
+
+  // Instantiate the request object
+  let req = https.request(requestDetails, (res)=>{
+    // Grab the status of the sent request
+    let status = res.statusCode;
+
+    if (status == 200 || status == 201) {
+      debug('Mailgun was Successful');
+      callback(false);
+    } else {
+      debug('Mailgun Was Not Successful');
+      callback('Status code was ' + status);
+    }
+  });
+
+  // Bind to the error event so it doesn't get thrown
+  req.on('error', (e)=>{
+    callback(e);
+  });
+
+  // Add the payload
+  req.write(stringPayload);
+
+  // End the request
+  req.end();
+};
+
 // Export the module
 module.exports = helpers;
