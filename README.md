@@ -22,6 +22,11 @@
 # Tech Stack
 - node
 
+# Third-party APIs Used
+- Stripe - https://stripe.com
+- Trumail - https://trumail.io
+
+
 ---
 ## RESTful API ENDPOINTS
 
@@ -32,6 +37,24 @@
 - Retrieve data for an existing user as JSON.  
 - Required fields: (in queryStringObject object) {string}`email`, {numeric}`pizzaId`
 - Return: Pizza object
+- Requires Token: Yes
+
+### ```/orders```
+
+##### POST
+
+- Register a new json order in orders folder. Make the payment connecting with Stripe API. Delete json cart from carts folder after the payment.   
+- Required: (in JSON payload) {string}`orderId`, {string}`email`
+- Return: Order object. {string}`orderId`, {string}`paymentId`, {numeric}`amount`, {string}`userEmail`, {Date}`date`
+- Requires Token: Yes
+
+### ```/carts```
+
+##### POST
+
+- Register a new json cart in carts folder.   
+- Required: (in JSON payload) {Array}`pizzas`, {string}`email`
+- Return: Cart object. {string}`cartId`, {Array}`pizzas`, {string}`userEmail`
 - Requires Token: Yes
 
 ### ```/users```
