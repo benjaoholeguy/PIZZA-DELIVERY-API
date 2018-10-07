@@ -30,6 +30,7 @@
 
 # Third-party APIs Used
 - Stripe - https://stripe.com
+- Mailgun - https://www.mailgun.com
 - Trumail - https://trumail.io
 
 
@@ -49,7 +50,7 @@
 
 ##### POST
 
-- Register a new json order in orders folder. Make the payment connecting with Stripe API. Delete json cart from carts folder after the payment.   
+- Register a new json order in orders folder. Make the payment connecting with Stripe API. Delete json cart from carts folder after the payment. Send an email with the order's amount and id. 
 - Required: (in JSON payload) {string}`orderId`, {string}`email`
 - Return: Order object. {string}`orderId`, {string}`paymentId`, {numeric}`amount`, {string}`userEmail`, {Date}`date`
 - Requires Token: Yes
