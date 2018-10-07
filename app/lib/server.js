@@ -143,7 +143,6 @@ server.router = {
   'ping' : handlers.ping,
   'users' : handlers.users,
   'tokens' : handlers.tokens,
-  'checks' : handlers.checks,
   'pizzas' : handlers.pizzas,
   'carts' : handlers.carts,
   'orders' : handlers.orders
