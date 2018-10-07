@@ -8,11 +8,12 @@
     - Create, edit and delete tokens
     - Get pizza's information
     - Create, edit and delete carts
-    - Make payments (orders) integrating Stripe API
+    - Make payments (orders) integrated with Stripe API
+    - Send confirmation Email integrated with Mailgun API
     - User could login and logout creating and destroying a token
 
 # Improvement opportunities
-    - Keep carts information. EG: present information about sales
+    - Keep carts information. EG: present information about sales. Pizza array added to order
 
 # Email validation
   - Two validation levels of the email:
