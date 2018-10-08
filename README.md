@@ -13,7 +13,9 @@
     - User could login and logout creating and destroying a token
 
 # Improvement opportunities
-    - Keep carts information. EG: present information about sales. Pizza array added to order
+    - Keep carts information. EG: present information about sales. Pizza array added to order. DONE (stored in order information)
+    - Create a worker to delete expired tokens
+    - Test automation 
 
 # Email validation
   - Two validation levels of the email:
@@ -50,7 +52,7 @@
 
 ##### POST
 
-- Register a new json order in orders folder. Make the payment connecting with Stripe API. Delete json cart from carts folder after the payment. Send an email with the order's amount and id. 
+- Register a new json order in orders folder. Make the payment connecting with Stripe API. Delete json cart from carts folder after the payment. Send an email with the order's amount and id.
 - Required: (in JSON payload) {string}`orderId`, {string}`email`
 - Return: Order object. {string}`orderId`, {string}`paymentId`, {numeric}`amount`, {string}`userEmail`, {Date}`date`
 - Requires Token: Yes
